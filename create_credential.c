@@ -53,11 +53,11 @@ void create_credential(fido_dev_t *device) {
 
   // Large Blob Key extension.
   // TODO: Use when supported.
-  /*ret = fido_cred_set_extensions(credential, FIDO_EXT_LARGEBLOB_KEY);
+  ret = fido_cred_set_extensions(credential, FIDO_EXT_LARGEBLOB_KEY);
   if (ret != FIDO_OK) {
     fprintf(stderr, "Could not set extensions: %s\n", fido_strerr(ret));
     goto cleanup_credential;
-  }*/
+  }
 
   // Write to the open device.
   ret = fido_dev_make_cred(device, credential, NULL);
