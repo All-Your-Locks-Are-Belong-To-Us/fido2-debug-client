@@ -2,7 +2,9 @@
 
 #include <string.h>
 #include <stdio.h>
- #include <ctype.h>
+#include <ctype.h>
+
+#define FIDO_INTERNAL
 
 char * convert_to_hex(const uint8_t *bytes, size_t len) {
   const size_t required_string_length = len * 2 + 1;
@@ -51,7 +53,12 @@ uint8_t *convert_from_hex(const char *hex_string, size_t *len) {
   return hex_buffer;
 }
 
+static const char *tree_symbol(const size_t items_left) {
+  return items_left > 0 ? "├" : "└";
+}
+
 void get_device_info(fido_dev_t *device) {
+  printf("\n");
   fido_cbor_info_t *info = fido_cbor_info_new();
   if (!info) {
     perror("fido_cbor_info_new");
@@ -64,14 +71,79 @@ void get_device_info(fido_dev_t *device) {
     goto info_cleanup;
   }
 
-  size_t options_len = fido_cbor_info_options_len(info);
-  printf("Found the following options:\n");
-  char **option_names = fido_cbor_info_options_name_ptr(info);
-  const bool *option_values = fido_cbor_info_options_value_ptr(info);
-  for (size_t option_idx = 0; option_idx < options_len; ++option_idx) {
-    printf("- %s: %s\n", option_names[option_idx], option_values[option_idx] ? "true" : "false");
+  printf("Authenticator\n");
+
+  // AAGUID
+  const size_t aaguid_len = fido_cbor_info_aaguid_len(info);
+  const uint8_t *aaguid_ptr = fido_cbor_info_aaguid_ptr(info);
+  if (aaguid_ptr != NULL) {
+    char* aaguid_string = convert_to_hex(aaguid_ptr, aaguid_len);
+    printf("├── AAGUID: %s\n", aaguid_string);
+    free(aaguid_string);
+  } else {
+    printf("├── AAGUID: NULL\n");
   }
-  printf("----\n");
+  
+  // Versions
+  size_t num_versions = fido_cbor_info_versions_len(info);
+  char **versions = fido_cbor_info_versions_ptr(info);
+  printf("├── versions (%zu)\n", num_versions);
+  while(num_versions-- > 0) {
+    char *version = *(versions++);
+    printf("│   %s── %s\n", tree_symbol(num_versions), version);
+  }
+
+  // Transports
+  size_t num_transports = fido_cbor_info_transports_len(info);
+  char **transports_ptr = fido_cbor_info_transports_ptr(info);
+  printf("├── transports (%zu)\n", num_transports);
+  while (num_transports-- > 0) {
+    const char *transport = *(transports_ptr++);
+    printf("│   %s── %s\n", tree_symbol(num_transports), transport);
+  }
+
+  // PIN Protocols
+  size_t num_pin_protocols = fido_cbor_info_protocols_len(info);
+  const uint8_t *pin_protocols = fido_cbor_info_protocols_ptr(info);
+  printf("├── pin protocols (%zu)\n", num_pin_protocols);
+  while(num_pin_protocols-- > 0) {
+    uint8_t pin_protocol = *(pin_protocols++);
+    printf("│   %s── %d\n", tree_symbol(num_pin_protocols), pin_protocol);
+  }
+
+  // Options
+  const size_t num_options = fido_cbor_info_options_len(info);
+  char **option_names = fido_cbor_info_options_name_ptr(info);
+  printf("├── options (%zu)\n", num_options);
+  const bool *option_values = fido_cbor_info_options_value_ptr(info);
+  for (size_t option_idx = 0; option_idx < num_options; ++option_idx) {
+    printf("│   %s── %s: %s\n", tree_symbol(num_options - option_idx - 1), option_names[option_idx], option_values[option_idx] ? "true" : "false");
+  }
+
+  // Extensions
+  size_t extensions_len = fido_cbor_info_extensions_len(info);
+  char **extensions_ptr = fido_cbor_info_extensions_ptr(info);
+  printf("├── extensions (%zu)\n", extensions_len);
+  while(extensions_len-- > 0) {
+    const char *extension = *(extensions_ptr++);
+    printf("│   %s── %s\n", tree_symbol(extensions_len), extension);
+  }
+
+  // Algorithms
+  const size_t num_algorithms = fido_cbor_info_algorithm_count(info);
+  printf("├── algorithms (%zu)\n", num_algorithms);
+  for (size_t algorithm_idx = 0; algorithm_idx < num_algorithms; ++algorithm_idx) {
+    const char *algorithm_type = fido_cbor_info_algorithm_type(info, algorithm_idx);
+    int algorithm_cose = fido_cbor_info_algorithm_cose(info, algorithm_idx);
+    printf("│   %s── %s (%d)\n", tree_symbol(num_algorithms - algorithm_idx - 1), algorithm_type, algorithm_cose);
+  }
+
+  printf("├── maxMsgSize: %llu\n", fido_cbor_info_maxmsgsiz(info));
+  printf("├── maxCredBlobLength: %llu\n", fido_cbor_info_maxcredbloblen(info));
+  printf("├── maxCredentialCountInList: %llu\n", fido_cbor_info_maxcredcntlst(info));
+  printf("├── maxCredentialIdLength: %llu\n", fido_cbor_info_maxcredidlen(info));
+  printf("└── firmware version: %llu\n", fido_cbor_info_fwversion(info));
+
 
   info_cleanup:
   fido_cbor_info_free(&info);
