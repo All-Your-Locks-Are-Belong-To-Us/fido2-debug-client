@@ -1,0 +1,11 @@
+# Ignore everything...
+*
+# ... but not those files with extentions (no binaries)
+!*.*
+# macOS debug symbols
+*.dSYM/
+
+# C object files
+*.o
+# C dependency files
+*.d
