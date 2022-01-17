@@ -29,4 +29,4 @@ write_large_blob: fido_util.o
 
 .PHONY: clean
 clean:
-	$(RM) $(TARGETS)
+	$(RM) $(TARGETS) *.o *.d
