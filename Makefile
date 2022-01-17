@@ -1,8 +1,16 @@
-CFLAGS = -I/usr/local/Cellar/openssl@1.1/1.1.1m/include -I /usr/local/Cellar/libfido2/1.9.0_1/include/ -g
-LDFLAGS = -L /usr/local/Cellar/libfido2/1.9.0_1/lib -L /usr/local/Cellar/openssl@1.1/1.1.1m/lib
-LDLIBS = -l fido2 -lssl
+UNAME := $(shell uname)
 
-TARGETS = reset create_credential read_credential read_device_info read_large_blob
+CFLAGS = -g
+ifeq ($(UNAME), Darwin)
+CC = gcc-11
+BREW_PREFIX := $(shell brew --prefix)
+CFLAGS += -I$(BREW_PREFIX)/opt/openssl@3/include -I$(BREW_PREFIX)/include
+LDFLAGS = -L$(BREW_PREFIX)/opt/openssl@3/lib -L./libfido2/build/src -Wl,-rpath libfido2/build/src
+else
+endif
+LDLIBS = -lfido2 -lssl
+
+TARGETS = reset create_credential read_credential read_device_info read_large_blob write_large_blob
 
 .PHONY: all
 all: $(TARGETS)
@@ -12,6 +20,7 @@ create_credential: fido_util.o
 read_credential: fido_util.o
 read_device_info: fido_util.o
 read_large_blob: fido_util.o
+write_large_blob: fido_util.o
 
 %.o: %.c
 	$(CC) $(CFLAGS) -MMD -c $< -o $@

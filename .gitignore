@@ -9,3 +9,7 @@
 *.o
 # C dependency files
 *.d
+
+# C Language Server
+.ccls
+

@@ -15,7 +15,16 @@ void read_large_blob(fido_dev_t *device)
   if (ret != FIDO_OK)
   {
     fprintf(stderr, "Could not read large blob: %s\n", fido_strerr(ret));
+    return;
   }
+  
+  printf("Large blob content:\n");
+  for (size_t idx = 0; idx < cbor_len; ++idx) {
+    printf("%02x", cbor_array[idx]);
+  }
+  printf("\n");
+
+  free(cbor_array);
 }
 
 int main(void)
