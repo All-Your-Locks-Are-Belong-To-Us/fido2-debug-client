@@ -70,14 +70,36 @@ void create_credential(fido_dev_t *device) {
   // Find and print credential ID.
   size_t id_len = fido_cred_id_len(credential);
   const uint8_t *id = fido_cred_id_ptr(credential);
-  uint8_t *id_copy = (uint8_t *)malloc(id_len);
-  memcpy(id_copy, id, id_len);
   char *credential_id_str = convert_to_hex(id, id_len);
   printf("Created credential len %zu with ID: %s\n", id_len, credential_id_str);
   free(credential_id_str);
 
+  // AAGUID
+  const unsigned char *aaguid_ptr = fido_cred_aaguid_ptr(credential);
+  if (aaguid_ptr) {
+    const size_t aaguid_len = fido_cred_aaguid_len(credential);
+    char *aaguid_str = convert_to_hex(aaguid_ptr, aaguid_len);
+    printf("AAGUID: %s\n", aaguid_str);
+    free(aaguid_str);
+  }
+ 
+  // PubKey
+  const unsigned char *pubkey_ptr = fido_cred_pubkey_ptr(credential);
+  if (pubkey_ptr) {
+    const size_t pubkey_len = fido_cred_pubkey_len(credential);
+    char *pubkey_str = convert_to_hex(pubkey_ptr, pubkey_len);
+    printf("PubKey: %s\n", pubkey_str);
+    free(pubkey_str);
+  }
 
-  free(id_copy);
+  // Large Blob Key
+  const unsigned char *large_blob_key_ptr = fido_cred_largeblob_key_ptr(credential);
+  if (large_blob_key_ptr) {
+    const size_t large_blob_key_len = fido_cred_largeblob_key_len(credential);
+    char *large_blob_key_str = convert_to_hex(large_blob_key_ptr, large_blob_key_len);
+    printf("LargeBlobKey: %s\n", large_blob_key_str);
+    free(large_blob_key_str);
+  }
 
   cleanup_credential:
   fido_cred_free(&credential);

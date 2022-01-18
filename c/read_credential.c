@@ -55,6 +55,12 @@ static void read_credential(fido_dev_t *device){
     goto cleanup_read_credential;
   }
 
+  ret = fido_assert_set_extensions(assert, FIDO_EXT_LARGEBLOB_KEY);
+  if (ret != FIDO_OK) {
+    fprintf(stderr, "Could not enable largeBlobKey extension: %s\n", fido_strerr(ret));
+    goto cleanup_read_credential;
+  }
+
   // Send assertion to authenticator.
   ret = fido_dev_get_assert(device, assert, NULL);
   if (ret != FIDO_OK) {
@@ -63,8 +69,16 @@ static void read_credential(fido_dev_t *device){
   }
 
   // Get user and stuff from assertion.
-  printf("Got user from assertion %s %s\n", fido_assert_user_name(assert, 1), fido_assert_user_display_name(assert, 1));
-  printf("Got sigcount %d and user_id len %zu\n", fido_assert_sigcount(assert, 0), fido_assert_user_id_len(assert, 0));
+  printf("User: %s (display name: %s)\n", fido_assert_user_name(assert, 0), fido_assert_user_display_name(assert, 0));
+  printf("Sigcount %d and user_id len %zu\n", fido_assert_sigcount(assert, 0), fido_assert_user_id_len(assert, 0));
+
+  const unsigned char *large_blob_key_ptr = fido_assert_largeblob_key_ptr(assert, 0);
+  if (large_blob_key_ptr) {
+    const size_t large_blob_key_len = fido_assert_largeblob_key_len(assert, 0);
+    char *large_blob_key_str = convert_to_hex(large_blob_key_ptr, large_blob_key_len);
+    printf("largeBlobKey: %s\n", large_blob_key_str);
+    free(large_blob_key_str);
+  }
 
   cleanup_read_credential:
   fido_assert_free(&assert);

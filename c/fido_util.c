@@ -192,6 +192,13 @@ void iterate_devices(void (*device_function)(fido_dev_t *)) {
   for (size_t device_idx = 0; device_idx < nr_found_devices; ++device_idx) {
     const fido_dev_info_t *info = fido_dev_info_ptr(dev_list, device_idx);
     fido_dev_t * device = open_device(info);
+    
+    // Disable timeout for easier debugging.
+    const int ret = fido_dev_set_timeout(device, -1);
+    if (ret != FIDO_OK) {
+      fprintf(stderr, "Could not set timeout: %s\n", fido_strerr(ret)); 
+    }
+
     if (device != NULL) {
       device_function(device);
       /*
