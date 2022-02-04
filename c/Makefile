@@ -1,6 +1,9 @@
 UNAME := $(shell uname)
 
-CFLAGS = -g
+# Relying Party ID
+RPID := wau.felixgohla.de
+
+CFLAGS = -g -DRPID="\"${RPID}\""
 ifeq ($(UNAME), Darwin)
 CC = gcc-11
 BREW_PREFIX := $(shell brew --prefix)

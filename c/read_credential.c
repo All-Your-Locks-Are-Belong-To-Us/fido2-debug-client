@@ -35,7 +35,7 @@ static void read_credential(fido_dev_t *device){
   }
 
   // Set relying party.
-  ret = fido_assert_set_rp(assert, "hotsir");
+  ret = fido_assert_set_rp(assert, RPID);
   if (ret != FIDO_OK) {
     fprintf(stderr, "Could not set client data: %s\n", fido_strerr(ret));
     goto cleanup_read_credential;

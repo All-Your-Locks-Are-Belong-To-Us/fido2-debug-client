@@ -4,6 +4,10 @@
 
 #include "fido_util.h"
 
+#ifndef RPID
+#define RPID "localhost"
+#endif
+
 void create_credential(fido_dev_t *device) {
   // Create a credential storage
   fido_cred_t *credential = fido_cred_new();
@@ -14,7 +18,7 @@ void create_credential(fido_dev_t *device) {
 
   // Prepare the credential.
   // Relying Party.
-  int ret = fido_cred_set_rp(credential, "hotsir", "hotsir");
+  int ret = fido_cred_set_rp(credential, RPID, RPID);
   if (ret != FIDO_OK) {
     fprintf(stderr, "Could not set rp: %s\n", fido_strerr(ret));
     goto cleanup_credential;
