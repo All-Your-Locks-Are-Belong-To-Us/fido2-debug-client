@@ -1,5 +1,6 @@
 # Ignore everything...
 *
+!*/
 # ... but not those files with extentions (no binaries)
 !*.*
 # macOS debug symbols
