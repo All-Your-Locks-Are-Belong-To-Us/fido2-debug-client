@@ -7,6 +7,7 @@
 #include "fido_util.h"
 #include "gpio.h"
 #include "crypto.h"
+#include "cbor_decode.h"
 
 #ifndef GREEN_PIN
 #define GREEN_PIN 26
@@ -138,14 +139,47 @@ static void read_credential(fido_dev_t *device){
     char *blob_string = (char *)malloc(blob_len + 1);
     memset(blob_string, 0, blob_len + 1);
     memcpy(blob_string, blob_content, blob_len);
-    printf("Content (%zu): %s\n", blob_len, blob_string);
-    if (!strcmp(blob_content, "['door42']")) {
+    // printf("Content (%zu): %s\n", blob_len, blob_string);
+
+    uint8_t *access_rights;
+    size_t access_rights_len;
+    uint8_t *credential_pub_key;
+    size_t credential_pub_key_len;
+    uint8_t *signature;
+    size_t signature_len;
+    const bool decoded_successfully = decode_cbor_access_rights(blob_content, blob_len, &access_rights, &access_rights_len, &credential_pub_key, &credential_pub_key_len, &signature, &signature_len);
+
+    if (decoded_successfully) {
+      // Still need to verify the signature.
+      uint8_t *data_buf = (uint8_t*)malloc(access_rights_len + credential_pub_key_len);
+      if (!data_buf); // TODO
+      memcpy(data_buf, access_rights, access_rights_len);
+      memcpy(data_buf + access_rights_len, credential_pub_key, credential_pub_key_len);
+      if (verify_ecdsa_signature(data_buf, access_rights_len + credential_pub_key_len, signature, signature_len)) {
+	// Last step: The public key of the credential must match the signed value to prevent key cloning attacks.
+        if (verify_fido_assertion(assert, credential_pub_key, credential_pub_key_len)) {
+          printf("Access granted ✅.\n");
+          blink_green();
+	} else {
+          printf("Access denied, public key mismatch.\n");
+          blink_red();
+	}
+      } else {
+      	printf("Access denied, signature incorrect.\n");
+	blink_red();
+      }
+    } else {
+      printf("Access denied, could not decode access rights.\n");
+      blink_red();
+    }
+
+    /*if (!strcmp(blob_content, "['door42']")) {
       printf("Access granted ✅.\n");
       blink_green();
     } else {
       printf("Access denied, invalid access rights.\n");
       blink_red();
-    }
+    }*/
     free(blob_string);
     free(blob_content);
   } else {
@@ -167,23 +201,7 @@ static void usage(const char *program_name) {
   fprintf(stderr, "Usage: %s [-i credential_id] [-l] [-w large_blob_content_file]\n", program_name);
 }
 
-static void crypto_test() {
-  uint8_t data[] = {'a', 'b', 'c'};
-  uint8_t sig[] = {
-    0x30, 0x35, 0x02, 0x18, 0x36, 0x7f, 0x33, 0x17, 0xbc, 0x73, 0xe6, 0x98,
-    0xa8, 0x0b, 0xa7, 0xd9, 0xea, 0x84, 0xd3, 0x14, 0xd7, 0x88, 0xb6, 0xd1,
-    0x1e, 0x03, 0x07, 0xa4, 0x02, 0x19, 0x00, 0xa8, 0x11, 0xd2, 0xf1, 0x31,
-    0xb1, 0xb8, 0x90, 0xdd, 0x48, 0x52, 0xd5, 0x25, 0x98, 0xfc, 0xf1, 0xa4,
-    0x05, 0x0e, 0x08, 0xa2, 0xc6, 0xc8, 0x1e
-  };
-  if (verify_ecdsa_signature(data, sizeof(data), sig, sizeof(sig))) {
-    printf("Successfully verified signature.\n");
-  }
-}
-
 int main(int argc, char **argv) {
-  crypto_test();
-
   gpio_init(GREEN_PIN);
   gpio_init(RED_PIN);
 

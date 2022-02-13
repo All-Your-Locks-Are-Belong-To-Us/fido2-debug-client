@@ -1,9 +1,15 @@
+#include "crypto.h"
+
+#include <fido.h>
+#include <fido/eddsa.h>
+#include <fido/es256.h>
+#include <fido/rs256.h>
 #include <openssl/sha.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#include "crypto.h"
+#include "cbor_decode.h"
 
 #ifndef PUBKEY_PATH
 #define PUBKEY_PATH "/etc/hotsir/pubkey.pem"
@@ -39,4 +45,31 @@ bool verify_ecdsa_signature(uint8_t *data, size_t data_len, uint8_t* signature, 
   EVP_PKEY_free(pubkey);
 
   return verification_result == 1;
+}
+
+
+bool verify_fido_assertion(fido_assert_t *assert, uint8_t *pub_key, size_t pub_key_len) {
+  // Convert the public key raw data to something, libfido understands.
+  // At the time of writing, there is no way to tell the key types apart provided by libfido.
+  // Therefore, libfido was patched to expose that functionaliy.
+
+  bool return_value = false;
+
+  int cose_algorithm = COSE_UNSPEC;
+  void *key = fido_credential_public_key(pub_key, pub_key_len, &cose_algorithm);
+  if (!key) {
+    fprintf(stderr, "Could not read public key.\n");
+    goto fail;
+  }
+
+  int verification_result = fido_assert_verify(assert, 0, cose_algorithm, key);
+  if (verification_result != FIDO_OK) {
+    fprintf(stderr, "Could not verify signature of assertion %s.\n", fido_strerr(verification_result));
+    goto fail;
+  }
+  return_value = true;
+
+fail:
+  fido_credential_public_key_free(&key, cose_algorithm);
+  return return_value;
 }
