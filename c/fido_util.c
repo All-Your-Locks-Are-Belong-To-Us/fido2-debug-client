@@ -35,7 +35,7 @@ static inline uint8_t hex_byte(const char *hex_string) {
 
 uint8_t *convert_from_hex(const char *hex_string, size_t *len) {
   ssize_t string_len = strlen(hex_string);
-  size_t buffer_len = (string_len / 2) + (string_len & 0x1); 
+  size_t buffer_len = (string_len / 2) + (string_len & 0x1);
   if (len != NULL) {
     *len = buffer_len;
   }
@@ -83,7 +83,7 @@ void get_device_info(fido_dev_t *device) {
   } else {
     printf("├── AAGUID: NULL\n");
   }
-  
+
   // Versions
   size_t num_versions = fido_cbor_info_versions_len(info);
   char **versions = fido_cbor_info_versions_ptr(info);
@@ -151,7 +151,7 @@ void get_device_info(fido_dev_t *device) {
 
 fido_dev_t *open_device(const fido_dev_info_t* device_info) {
   printf("Found authenticator %s at path %s.\n", fido_dev_info_product_string(device_info), fido_dev_info_path(device_info));
-    
+
   // Allocate a new device for opening.
   fido_dev_t *device = fido_dev_new();
   if (device == NULL) {
@@ -159,10 +159,11 @@ fido_dev_t *open_device(const fido_dev_info_t* device_info) {
     return NULL;
   }
 
-  int ret = fido_dev_open(device, fido_dev_info_path(device_info)); 
+  int ret = fido_dev_open(device, fido_dev_info_path(device_info));
   if (ret != FIDO_OK) {
     fprintf(stderr, "Error opening FIDO2 device: %s\n", fido_strerr(ret));
     fido_dev_free(&device);
+    return NULL;
   }
 
   if (!fido_dev_is_fido2(device)) {
@@ -179,7 +180,7 @@ void iterate_devices(void (*device_function)(fido_dev_t *)) {
     perror("fido_dev_info_new");
     exit(EXIT_FAILURE);
   }
-  
+
   size_t nr_found_devices;
   fido_dev_info_manifest(dev_list, MAX_DEVICES, &nr_found_devices);
 
@@ -192,25 +193,19 @@ void iterate_devices(void (*device_function)(fido_dev_t *)) {
   for (size_t device_idx = 0; device_idx < nr_found_devices; ++device_idx) {
     const fido_dev_info_t *info = fido_dev_info_ptr(dev_list, device_idx);
     fido_dev_t * device = open_device(info);
-    
+    if (!device) {
+      continue;
+    }
+
     // Disable timeout for easier debugging.
     const int ret = fido_dev_set_timeout(device, -1);
     if (ret != FIDO_OK) {
-      fprintf(stderr, "Could not set timeout: %s\n", fido_strerr(ret)); 
+      fprintf(stderr, "Could not set timeout: %s\n", fido_strerr(ret));
     }
 
-    if (device != NULL) {
-      device_function(device);
-      /*
-      if (reset_authenticator) {
-        reset_device(device);
-        continue;
-      }
-      get_info(device);
-      create_test_credential(device);
-      */
-      fido_dev_free(&device);
-    }
+    device_function(device);
+    fido_dev_close(device);
+    fido_dev_free(&device);
   }
 
   cleanup:
