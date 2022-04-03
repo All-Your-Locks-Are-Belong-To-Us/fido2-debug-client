@@ -20,10 +20,10 @@
 static bool check_cbor_parsing_error(const struct cbor_load_result *result) {
   if (result->error.code != CBOR_ERR_NONE) {
     fprintf(
-        stderr,
-        "There was an error while reading the input near byte %zu (read %zu "
-        "bytes in total): ",
-        result->error.position, result->read);
+      stderr,
+      "There was an error while reading the input near byte %zu (read %zu "
+      "bytes in total): ",
+      result->error.position, result->read);
     switch (result->error.code) {
       case CBOR_ERR_MALFORMATED: {
         fprintf(stderr, "Malformed data\n");
@@ -43,9 +43,9 @@ static bool check_cbor_parsing_error(const struct cbor_load_result *result) {
       }
       case CBOR_ERR_SYNTAXERROR: {
         fprintf(
-	    stderr,
-            "Syntactically malformed data -- see "
-            "http://tools.ietf.org/html/rfc7049\n");
+          stderr,
+          "Syntactically malformed data -- see "
+          "http://tools.ietf.org/html/rfc7049\n");
         break;
       }
       case CBOR_ERR_NONE: {
@@ -74,7 +74,6 @@ bool decode_cbor_access_rights(
   *access_rights = NULL;
   *public_key = NULL;
   *signature = NULL;
-
 
   // Read in CBOR.
   struct cbor_load_result result;

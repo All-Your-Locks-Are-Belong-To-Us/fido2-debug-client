@@ -156,30 +156,23 @@ static void read_credential(fido_dev_t *device){
       memcpy(data_buf, access_rights, access_rights_len);
       memcpy(data_buf + access_rights_len, credential_pub_key, credential_pub_key_len);
       if (verify_ecdsa_signature(data_buf, access_rights_len + credential_pub_key_len, signature, signature_len)) {
-	// Last step: The public key of the credential must match the signed value to prevent key cloning attacks.
+        // Last step: The public key of the credential must match the signed value to prevent key cloning attacks.
         if (verify_fido_assertion(assert, credential_pub_key, credential_pub_key_len)) {
           printf("Access granted ✅.\n");
           blink_green();
-	} else {
+        } else {
           printf("Access denied, public key mismatch.\n");
           blink_red();
-	}
+        }
       } else {
-      	printf("Access denied, signature incorrect.\n");
-	blink_red();
+        printf("Access denied, signature incorrect.\n");
+        blink_red();
       }
     } else {
       printf("Access denied, could not decode access rights.\n");
       blink_red();
     }
 
-    /*if (!strcmp(blob_content, "['door42']")) {
-      printf("Access granted ✅.\n");
-      blink_green();
-    } else {
-      printf("Access denied, invalid access rights.\n");
-      blink_red();
-    }*/
     free(blob_string);
     free(blob_content);
   } else {

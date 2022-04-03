@@ -67,8 +67,8 @@ static void read_credential(fido_dev_t *device){
   if (read_large_blob_content || large_blob_content_file) {
   ret = fido_assert_set_extensions(assert, FIDO_EXT_LARGEBLOB_KEY);
     if (ret != FIDO_OK) {
-        fprintf(stderr, "Could not enable largeBlobKey extension: %s\n", fido_strerr(ret));
-        goto cleanup_read_credential;
+      fprintf(stderr, "Could not enable largeBlobKey extension: %s\n", fido_strerr(ret));
+      goto cleanup_read_credential;
     }
   }
 
@@ -86,51 +86,51 @@ static void read_credential(fido_dev_t *device){
   if (read_large_blob_content || large_blob_content_file) {
     const unsigned char *large_blob_key_ptr = fido_assert_largeblob_key_ptr(assert, 0);
     if (large_blob_key_ptr) {
-        const size_t large_blob_key_len = fido_assert_largeblob_key_len(assert, 0);
+      const size_t large_blob_key_len = fido_assert_largeblob_key_len(assert, 0);
 
-    // Print the key.
-    char *large_blob_key_str = convert_to_hex(large_blob_key_ptr, large_blob_key_len);
-        printf("largeBlobKey: %s\n", large_blob_key_str);
-        free(large_blob_key_str);
+      // Print the key.
+      char *large_blob_key_str = convert_to_hex(large_blob_key_ptr, large_blob_key_len);
+      printf("largeBlobKey: %s\n", large_blob_key_str);
+      free(large_blob_key_str);
 
-    // Write content of large blob.
-    if (large_blob_content_file) {
+      // Write content of large blob.
+      if (large_blob_content_file) {
         char blob_data[1024];
-            memset(blob_data, 0, sizeof(blob_data));
+        memset(blob_data, 0, sizeof(blob_data));
         FILE *fil = fopen(large_blob_content_file, "r");
         if (fil == NULL) {
           perror("fopen large_blob_content_file");
           goto cleanup_read_credential;
         }
-            fgets(blob_data, sizeof(blob_data) - 1, fil);
+        fgets(blob_data, sizeof(blob_data) - 1, fil);
         fclose(fil);
 
-            const size_t content_len = strlen(blob_data);
+        const size_t content_len = strlen(blob_data);
         ret = fido_dev_largeblob_set(device, large_blob_key_ptr, large_blob_key_len, blob_data, content_len, NULL);
-      if (ret != FIDO_OK) {
-        fprintf(stderr, "Could not set per credential large blob content: %s.\n", fido_strerr(ret));
-        goto cleanup_read_credential;
-      }
+        if (ret != FIDO_OK) {
+          fprintf(stderr, "Could not set per credential large blob content: %s.\n", fido_strerr(ret));
+          goto cleanup_read_credential;
+        }
       }
 
-    // And get the content.
-    if (read_large_blob_content) {
-      uint8_t *blob_content = NULL;
-      size_t blob_len;
-      ret = fido_dev_largeblob_get(device, large_blob_key_ptr, large_blob_key_len, &blob_content, &blob_len);
-      if (ret != FIDO_OK || !blob_content) {
-        fprintf(stderr, "Could not decrypt large blob content: %s.\n", fido_strerr(ret));
+      // And get the content.
+      if (read_large_blob_content) {
+        uint8_t *blob_content = NULL;
+        size_t blob_len;
+        ret = fido_dev_largeblob_get(device, large_blob_key_ptr, large_blob_key_len, &blob_content, &blob_len);
+        if (ret != FIDO_OK || !blob_content) {
+          fprintf(stderr, "Could not decrypt large blob content: %s.\n", fido_strerr(ret));
+          free(blob_content);
+          goto cleanup_read_credential;
+        }
+
+        printf("Got %zu bytes of large blob:\n", blob_len);
+        char *large_blob_content_str = convert_to_hex(blob_content, blob_len);
+        printf("%s\n", large_blob_content_str);
+        free(large_blob_content_str);
+
         free(blob_content);
-        goto cleanup_read_credential;
       }
-
-      printf("Got %zu bytes of large blob:\n", blob_len);
-      char *large_blob_content_str = convert_to_hex(blob_content, blob_len);
-      printf("%s\n", large_blob_content_str);
-      free(large_blob_content_str);
-
-      free(blob_content);
-    }
     }
   }
 

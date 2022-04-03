@@ -12,8 +12,8 @@ void reset_device(fido_dev_t *device) {
 }
 
 int main(void) {
-   // Initialize FIDO library.
-	fido_init(0);
+  // Initialize FIDO library.
+  fido_init(0);
 
   iterate_devices(reset_device);
 

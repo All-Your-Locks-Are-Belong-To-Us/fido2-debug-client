@@ -211,5 +211,4 @@ void iterate_devices(void (*device_function)(fido_dev_t *)) {
   cleanup:
   // Delete the list of device infos.
   fido_dev_info_free(&dev_list, MAX_DEVICES);
-
 }
