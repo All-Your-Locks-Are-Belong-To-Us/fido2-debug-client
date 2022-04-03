@@ -3,6 +3,9 @@
 !*/
 # ... but not those files with extentions (no binaries)
 !*.*
+!LICENSE
+!Makefile
+
 # macOS debug symbols
 *.dSYM/
 
@@ -13,4 +16,3 @@
 
 # C Language Server
 .ccls
-
