@@ -49,7 +49,7 @@ void create_credential(fido_dev_t *device) {
   }
 
   // Credential type.
-  ret = fido_cred_set_type(credential, COSE_ES256);
+  ret = fido_cred_set_type(credential, COSE_EDDSA);
   if (ret != FIDO_OK) {
     fprintf(stderr, "Could not set credential type: %s\n", fido_strerr(ret));
     goto cleanup_credential;
