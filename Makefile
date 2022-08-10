@@ -5,7 +5,7 @@ RPID := wau.felixgohla.de
 
 CFLAGS = -g -DRPID='"${RPID}"'
 ifeq ($(UNAME), Darwin)
-CC = gcc-11
+CC = gcc-12
 BREW_PREFIX := $(shell brew --prefix)
 CFLAGS += -I$(BREW_PREFIX)/opt/openssl@3/include -I$(BREW_PREFIX)/include
 LDFLAGS = -L$(BREW_PREFIX)/opt/openssl@3/lib -L./libfido2/build/src -L$(BREW_PREFIX)/lib -Wl,-rpath libfido2/build/src
